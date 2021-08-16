@@ -1,0 +1,5 @@
+#editor
+.idea/
+
+#bytecode
+__pycache__/
