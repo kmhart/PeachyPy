@@ -3,11 +3,17 @@ import discord
 from peachykey import *
 from datetime import datetime
 from urllib.parse import quote
-from discord_components import Button, ButtonStyle, InteractionType
+from discord_components import Button, ButtonStyle, Interaction
 import asyncio
 import math
 import re
 import logging
+
+
+class Bookmark:
+    def __init__(self, current, c_from):
+        self.current = current
+        self.c_from = c_from
 
 
 class FFXIV(commands.Cog):
@@ -171,123 +177,74 @@ class FFXIV(commands.Cog):
 
             embed = discord.Embed(title=query, description=page)
 
-            current = 1
-            c_from = 0
+            bookmark = Bookmark(1, 0)
 
-            main_message = await ctx.send(
+            async def button_left_callback(inter: Interaction):
+                bookmark.current -= 1
+                bookmark.c_from -= 30
+
+                if bookmark.current < 1:
+                    bookmark.current = pages_no
+                    bookmark.c_from = 30 * (pages_no - 1)
+                elif bookmark.current > pages_no:
+                    bookmark.current = 1
+                    bookmark.c_from = 0
+
+                await button_callback(inter)
+
+            async def button_right_callback(inter: Interaction):
+                bookmark.current += 1
+                bookmark.c_from += 30
+
+                if bookmark.current < 1:
+                    bookmark.current = pages_no
+                    bookmark.c_from = 30 * (pages_no - 1)
+                elif bookmark.current > pages_no:
+                    bookmark.current = 1
+                    bookmark.c_from = 0
+
+                await button_callback(inter)
+
+            async def button_callback(inter: Interaction):
+                await inter.edit_origin(embed=await self.search_embed(page_no=bookmark.c_from, url=url, query=query),
+                                        components=[
+                    [
+                        self.bot.components_manager.add_callback(
+                            Button(style=ButtonStyle.blue, emoji="◀"),
+                            button_left_callback,
+                        ),
+                        Button(
+                            label=f"Page {bookmark.current}/{pages_no}",
+                            disabled=True,
+                        ),
+                        self.bot.components_manager.add_callback(
+                            Button(style=ButtonStyle.blue, emoji="▶"),
+                            button_right_callback,
+                        ),
+                    ]
+                ])
+
+            await ctx.send(
                 embed=embed,
+                delete_after=600.0,
                 components=[
                     [
-                        Button(
-                            label="Prev",
-                            id=f"back.{ctx.message.id}",
-                            style=ButtonStyle.red
+                        self.bot.components_manager.add_callback(
+                            Button(style=ButtonStyle.blue, emoji="◀️"),
+                            button_left_callback,
                         ),
                         Button(
-                            label=f"Page {current} / {pages_no}",
-                            id="cur",
-                            style=ButtonStyle.grey,
-                            disabled=True
+                            label=f"Page {bookmark.current}/{pages_no}",
+                            disabled=True,
                         ),
-                        Button(
-                            label="Next",
-                            id=f"front.{ctx.message.id}",
-                            style=ButtonStyle.red
+                        self.bot.components_manager.add_callback(
+                            Button(style=ButtonStyle.blue, emoji="▶️"),
+                            button_right_callback,
                         ),
-                        Button(
-                            label="End",
-                            id=f"end.{ctx.message.id}",
-                            style=ButtonStyle.red
-                        )
                     ]
                 ]
             )
 
-            while True:
-                try:
-                    interaction = await self.bot.wait_for(
-                        "button_click",
-                        check=lambda i: i.component.id in [f"back.{ctx.message.id}", f"front.{ctx.message.id}", f"end.{ctx.message.id}"],
-                        timeout=30.0
-                    )
-
-                    if interaction.component.id == f"back.{ctx.message.id}":
-                        current -= 1
-                        c_from -= 30
-                    elif interaction.component.id == f"front.{ctx.message.id}":
-                        current += 1
-                        c_from += 30
-                    elif interaction.component.id == f"end.{ctx.message.id}":
-                        raise asyncio.TimeoutError
-
-                    if current < 1:
-                        current = pages_no
-                        c_from = 30 * (pages_no - 1)
-                    elif current > pages_no:
-                        current = 1
-                        c_from = 0
-
-                    await interaction.respond(
-                        type=InteractionType.UpdateMessage,
-                        embed=await self.search_embed(page_no=c_from, url=url, query=query),
-                        components=[
-                            [
-                                Button(
-                                    label="Prev",
-                                    id=f"back.{ctx.message.id}",
-                                    style=ButtonStyle.red
-                                ),
-                                Button(
-                                    label=f"Page {current} / {pages_no}",
-                                    id="cur",
-                                    style=ButtonStyle.grey,
-                                    disabled=True
-                                ),
-                                Button(
-                                    label="Next",
-                                    id=f"front.{ctx.message.id}",
-                                    style=ButtonStyle.red
-                                ),
-                                Button(
-                                    label="End",
-                                    id=f"end.{ctx.message.id}",
-                                    style=ButtonStyle.red
-                                )
-                            ]
-                        ]
-                    )
-                except asyncio.TimeoutError:
-                    await main_message.edit(
-                        components=[
-                            [
-                                Button(
-                                    label="Prev",
-                                    id="back",
-                                    style=ButtonStyle.red,
-                                    disabled=True
-                                ),
-                                Button(
-                                    label=f"Page {current} / {pages_no}",
-                                    id="cur",
-                                    style=ButtonStyle.grey,
-                                    disabled=True
-                                ),
-                                Button(
-                                    label="Next",
-                                    id="front",
-                                    style=ButtonStyle.red,
-                                    disabled=True
-                                ),
-                                Button(
-                                    label="End",
-                                    id="end",
-                                    style=ButtonStyle.red,
-                                    disabled=True
-                                )
-                            ]
-                        ]
-                    )
-                    break
         else:
             await ctx.send("I couldn't find any results.")
 

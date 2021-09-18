@@ -187,6 +187,8 @@ class Mon(commands.Cog):
 
             # write first row
             for i, value in enumerate(first):
+                if i == 2:
+                    value = f"https://i.imgur.com/{value}"
                 worksheet.write(1, i, value)
 
             # write remaining inventory, skipping first row (we wrote this already)
@@ -195,17 +197,21 @@ class Mon(commands.Cog):
                     if i == 1:
                         continue
                     for j, value in enumerate(row):
-                        worksheet.write(i, j, row[j])
+                        if j == 2:
+                            value = f"https://i.imgur.com/{value}"
+                        worksheet.write(i, j, value)
         return filename
 
     # ------------------ discord embeds -------------------------
 
     def current_embed(self):
         # embed for rotating demon
+        file = discord.File(f"persona/{self.current_dmn[5]}", filename=self.current_dmn[5])
+
         embed = discord.Embed(title="A demon appears!",
                               description=f"Rank {self.current_dmn[4]} demon {self.current_dmn[1]} appears!")
-        embed.set_image(url=self.current_dmn[5])
-        return embed
+        embed.set_image(url=f"attachment://{self.current_dmn[5]}")
+        return embed, file
 
     def starter_embed(self, starter):
         # embed for starter option
@@ -218,11 +224,13 @@ class Mon(commands.Cog):
                   "I am the brilliant mother, Maia...\"", "CHOICE 1: MAIA")
         }
 
+        file = discord.File(f"persona/{starter[5]}", filename=starter[5])
+
         embed = discord.Embed(title=text.get(starter[0])[0], description=text.get(starter[0])[1])
         embed.add_field(name="Affinity", value=f"element: {starter[2]}, weak: {starter[8]}", inline=False)
         embed.add_field(name="Strength", value=f"attack power: {starter[6]} - {starter[7]}", inline=False)
-        embed.set_image(url=starter[5])
-        return embed
+        embed.set_image(url=f"attachment://{starter[5]}")
+        return embed, file
 
     def evolve_embed(self, usr_id):
         # embed for starter evolution
@@ -237,21 +245,25 @@ class Mon(commands.Cog):
                  "My pure counterpart... Do not fear your destiny... \""
         }
 
+        file = discord.File(f"persona/{persona[5]}", filename=persona[5])
+
         embed = discord.Embed(title=text.get(persona[0]),
                               description="The resolution in your heart has awakened a new persona!")
         embed.add_field(name="Affinity", value=f"element: {persona[2]}, weak: {persona[8]}", inline=False)
         embed.add_field(name="Strength", value=f"attack power: {persona[6]} - {persona[7]}", inline=False)
-        embed.set_image(url=persona[5])
-        return embed
+        embed.set_image(url=f"attachment://{persona[5]}")
+        return embed, file
 
     def capture_embed(self, demon):
         # embed upon capture of demon
+        file = discord.File(f"persona/{demon[5]}", filename=demon[5])
+
         embed = discord.Embed(title="I am thou, thou art I!",
                               description=f"{demon[1]} emerges from the sea of your soul!")
         embed.add_field(name="Affinity", value=f"element: {demon[2]}, weak: {demon[8]}", inline=False)
         embed.add_field(name="Strength", value=f"attack power: {demon[6]} - {demon[7]}", inline=False)
-        embed.set_image(url=demon[5])
-        return embed
+        embed.set_image(url=f"attachment://{demon[5]}")
+        return embed, file
 
     # -----------------------------------------------------------
 
@@ -281,9 +293,13 @@ class Mon(commands.Cog):
 
             persona = self.get_starter()
 
-            await ctx.send(embed=self.starter_embed(persona[2]))
-            await ctx.send(embed=self.starter_embed(persona[0]))
-            await ctx.send(embed=self.starter_embed(persona[1]))
+            e1, f1 = self.starter_embed(persona[2])
+            e2, f2 = self.starter_embed(persona[0])
+            e3, f3 = self.starter_embed(persona[1])
+
+            await ctx.send(embed=e1, file=f1)
+            await ctx.send(embed=e2, file=f2)
+            await ctx.send(embed=e3, file=f3)
 
             def check(m):
                 return m.author == ctx.message.author and m.channel == ctx.message.channel
@@ -376,14 +392,17 @@ class Mon(commands.Cog):
                         self.caught = True
                         self.add_persona(self.current_dmn[0], ctx.author.id)
 
+                        embed, file = self.capture_embed(self.current_dmn)
+
                         await ctx.send(text + f"{ctx.author.name} wins! A new persona has emerged!",
-                                       embed=self.capture_embed(self.current_dmn))
+                                       embed=embed, file=file)
 
                         # update user's level, if necessary
                         evolve = await self.update_level(ctx.author.id)
                         if evolve:
+                            embed, file = self.evolve_embed(ctx.author.id)
                             await ctx.send("What? Something is happening!",
-                                           embed=self.evolve_embed(ctx.author.id))
+                                           embed=embed, file=file)
 
     @persona.command(help="Check your current persona compendium.")
     @commands.check(is_channel)
@@ -497,7 +516,10 @@ class Mon(commands.Cog):
                             self.add_persona(demon[0], ctx.author.id)
                             await self.update_level(ctx.author.id)
 
-                            await ctx.send(f"{ctx.author.name} gained a new persona!", embed=self.capture_embed(demon))
+                            embed, file = self.capture_embed(demon)
+
+                            await ctx.send(f"{ctx.author.name} gained a new persona!",
+                                           embed=embed, file=file)
                         else:
                             await ctx.send("Cancelling fusion. . .")
 
@@ -522,7 +544,8 @@ class Mon(commands.Cog):
         self.current_dmn = self.random_rarity(rarity)
 
         channel = self.bot.get_channel(MON_CHANNEL)
-        await channel.send(embed=self.current_embed())
+        embed, file = self.current_embed()
+        await channel.send(embed=embed, file=file)
 
     @pull_demon.before_loop
     async def before_pull(self):
