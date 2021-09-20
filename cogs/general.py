@@ -9,6 +9,7 @@ class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.session = bot.session
+        self.logger = bot.logger
 
     @commands.command()
     async def hello(self, ctx):
@@ -25,6 +26,13 @@ class General(commands.Cog):
         await ctx.send(f"Hi there, I'm PeachyPy! 🥰 I look forward to serving you, {ctx.author.name}!\n"
                        f"You can call me at any time with the following prefixes: Peachy, PX\n"
                        f"I have a few tasks available. Call me with the \"help\" command for more information. {emoji}")
+
+    @commands.command()
+    @commands.is_owner()
+    async def shutdown(self, ctx):
+        await ctx.bot.logout()
+        self.logger.info("Logged out.")
+        exit()
 
 
 def setup(bot):

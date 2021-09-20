@@ -4,6 +4,7 @@ import sqlite3
 import random
 import asyncio
 import os
+import uuid
 from xlsxwriter.workbook import Workbook
 from peachykey import MON_CHANNEL
 
@@ -169,7 +170,7 @@ class Mon(commands.Cog):
             first[5] = first[5] + (level * 10)
 
         # excel workbook
-        filename = f"inventory\{usr_id}_i.xlsx"
+        filename = os.path.join("inventory", f"{uuid.uuid4().hex}.xlsx")
         workbook = Workbook(filename, {'constant memory': True})
         with workbook:
             worksheet = workbook.add_worksheet()
@@ -206,7 +207,8 @@ class Mon(commands.Cog):
 
     def current_embed(self):
         # embed for rotating demon
-        file = discord.File(f"persona/{self.current_dmn[5]}", filename=self.current_dmn[5])
+        loc = os.path.join("persona", self.current_dmn[5])
+        file = discord.File(loc, filename=self.current_dmn[5])
 
         embed = discord.Embed(title="A demon appears!",
                               description=f"Rank {self.current_dmn[4]} demon {self.current_dmn[1]} appears!")
@@ -224,7 +226,8 @@ class Mon(commands.Cog):
                   "I am the brilliant mother, Maia...\"", "CHOICE 1: MAIA")
         }
 
-        file = discord.File(f"persona/{starter[5]}", filename=starter[5])
+        loc = os.path.join("persona", starter[5])
+        file = discord.File(loc, filename=starter[5])
 
         embed = discord.Embed(title=text.get(starter[0])[0], description=text.get(starter[0])[1])
         embed.add_field(name="Affinity", value=f"element: {starter[2]}, weak: {starter[8]}", inline=False)
@@ -245,7 +248,8 @@ class Mon(commands.Cog):
                  "My pure counterpart... Do not fear your destiny... \""
         }
 
-        file = discord.File(f"persona/{persona[5]}", filename=persona[5])
+        loc = os.path.join("persona", persona[5])
+        file = discord.File(loc, filename=persona[5])
 
         embed = discord.Embed(title=text.get(persona[0]),
                               description="The resolution in your heart has awakened a new persona!")
@@ -256,7 +260,8 @@ class Mon(commands.Cog):
 
     def capture_embed(self, demon):
         # embed upon capture of demon
-        file = discord.File(f"persona/{demon[5]}", filename=demon[5])
+        loc = os.path.join("persona", demon[5])
+        file = discord.File(loc, filename=demon[5])
 
         embed = discord.Embed(title="I am thou, thou art I!",
                               description=f"{demon[1]} emerges from the sea of your soul!")

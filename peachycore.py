@@ -32,8 +32,31 @@ class PeachyPy(commands.Bot):
         self.logger.info(f"{self.user} ready.")
 
     async def on_command_error(self, ctx, error):
+        if self.extra_events.get('on_command_error', None):
+            return
+
+        if hasattr(ctx.command, 'on_error'):
+            return
+
+        cog = ctx.cog
+        if cog and cog._get_overridden_method(cog.cog_command_error) is not None:
+            return
+
         if isinstance(error, commands.TooManyArguments):
-            return await ctx.send("Too many arguments!")
+            return await ctx.send("That's too many arguments!")
+
+        if isinstance(error, commands.MissingPermissions) or isinstance(error, commands.MissingRole) \
+                or isinstance(error, commands.NotOwner):
+            return await ctx.send("Sorry, you don't have the required permissions for this command.")
+
+        if isinstance(error, commands.DisabledCommand):
+            return await ctx.send("Sorry, that command is disabled.")
+
+        if isinstance(error, commands.CheckFailure):
+            return await ctx.send("Something seems to be missing here. 🤔")
+
+        if isinstance(error, commands.BadArgument) or isinstance(error, commands.ArgumentParsingError):
+            return await ctx.send("I don't understand your input. Can you check that and try again?")
 
         self.logger.warning(error)
 
