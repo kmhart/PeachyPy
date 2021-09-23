@@ -1,8 +1,5 @@
 from discord.ext import commands
 from datetime import datetime
-from urllib.parse import quote
-import json
-from peachykey import *
 
 
 class General(commands.Cog):
@@ -30,6 +27,7 @@ class General(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def shutdown(self, ctx):
+        ctx.send("Good night!")
         await ctx.bot.logout()
         self.logger.info("Logged out.")
         exit()

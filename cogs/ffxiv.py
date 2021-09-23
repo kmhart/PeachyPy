@@ -4,10 +4,8 @@ from peachykey import *
 from datetime import datetime
 from urllib.parse import quote
 from discord_components import Button, ButtonStyle, Interaction
-import asyncio
 import math
 import re
-import logging
 
 
 class Bookmark:
@@ -362,6 +360,108 @@ class FFXIV(commands.Cog):
                 else:
                     await ctx.send(embed=embed)
 
+        else:
+            await ctx.send("I couldn't find that item.")
+
+    @ff.command(help="Check market prices")
+    async def market(self, ctx, *, query: str):
+        query = quote(query)
+        url = f"https://xivapi.com/search?indexes=item&string={query}&limit=1&language=en&private_key={FFXIV_KEY}"
+
+        async with self.session.get(url) as resp:
+            result = await resp.json()
+
+        if result["Pagination"]["Results"] > 0:
+            id = result["Results"][0]["ID"]
+            name = result["Results"][0]["Name"]
+            icon = result["Results"][0]["Icon"]
+            url = f"https://universalis.app/api/crystal/{id}?listings=10&entries=0"
+
+            async with self.session.get(url) as resp:
+                status = resp.status
+                result = await resp.json()
+
+            if status == 200:
+                embed = discord.Embed(title=name)
+                embed.set_thumbnail(url=f"https://xivapi.com{icon}")
+                embed.set_author(name="Crystal Market Data")
+
+                worlds = ""
+                prices = ""
+                totals = ""
+
+                for listing in result["listings"]:
+                    price = listing["pricePerUnit"]
+                    quantity = listing["quantity"]
+                    total = price * quantity
+
+                    if listing["hq"]:
+                        prices += f"<:hq:890698024198750268><:gil:890699123777490995> {price:,} x{quantity}\n"
+                    else:
+                        prices += f"<:blank:890704169915269120><:gil:890699123777490995> {price:,} x{quantity}\n"
+
+                    worlds += listing["worldName"] + "\n"
+                    totals += f"<:gil:890699123777490995> {total:,}\n"
+
+                embed.add_field(name="Price", value=prices)
+                embed.add_field(name="World", value=worlds)
+                embed.add_field(name="Total", value=totals)
+
+                await ctx.send(embed=embed)
+
+            else:
+                await ctx.send("This item is unavailable!")
+        else:
+            await ctx.send("I couldn't find that item.")
+
+    @ff.command(help="Check HQ market prices")
+    async def markethq(self, ctx, *, query: str):
+        query = quote(query)
+        url = f"https://xivapi.com/search?indexes=item&string={query}&limit=1&language=en&private_key={FFXIV_KEY}"
+
+        async with self.session.get(url) as resp:
+            result = await resp.json()
+
+        if result["Pagination"]["Results"] > 0:
+            id = result["Results"][0]["ID"]
+            name = result["Results"][0]["Name"]
+            icon = result["Results"][0]["Icon"]
+            url = f"https://universalis.app/api/crystal/{id}?listings=10&entries=0&hq=true"
+
+            async with self.session.get(url) as resp:
+                status = resp.status
+                result = await resp.json()
+
+            if status == 200 and len(result["listings"]) > 0:
+                embed = discord.Embed(title=name)
+                embed.set_thumbnail(url=f"https://xivapi.com{icon}")
+                embed.set_author(name="Crystal Market Data")
+
+                worlds = ""
+                prices = ""
+                totals = ""
+
+                for listing in result["listings"]:
+                    price = listing["pricePerUnit"]
+                    quantity = listing["quantity"]
+                    total = price * quantity
+
+                    if listing["hq"]:
+                        prices += f"<:hq:890698024198750268><:gil:890699123777490995> {price:,} x{quantity}\n"
+                    else:
+                        prices += f"<:blank:890704169915269120><:gil:890699123777490995> {price:,} x{quantity}\n"
+
+                    worlds += listing["worldName"] + "\n"
+                    totals += f"<:gil:890699123777490995> {total:,}\n"
+
+                embed.add_field(name="Price", value=prices)
+                embed.add_field(name="World", value=worlds)
+                embed.add_field(name="Total", value=totals)
+
+                await ctx.send(embed=embed)
+
+            else:
+                await ctx.send("This item is unavailable!")
         else:
             await ctx.send("I couldn't find that item.")
 

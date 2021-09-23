@@ -5,9 +5,6 @@ import aiohttp
 from discord_components import DiscordComponents
 import logging
 
-# to do: finish error handling
-# logging
-
 extensions = ("cogs.mon", "cogs.convert", "cogs.general", "cogs.ffxiv")
 prefix = ("peachy ", "Peachy ", "peachypy ", "Peachypy ", "PeachyPy ", "px ", "PX ", "Px")
 
@@ -17,7 +14,7 @@ class PeachyPy(commands.Bot):
         super().__init__(command_prefix=prefix, case_insensitive=True, activity=discord.Game(name="with Python"))
 
         self.session = aiohttp.ClientSession(loop=self.loop)
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(filename="peachylog.log", level=logging.INFO)
         self.logger = logging.getLogger("Peachy")
         self.logger.setLevel(logging.INFO)
 
