@@ -5,8 +5,10 @@ import aiohttp
 from discord_components import DiscordComponents
 import logging
 
+# to do: logging timestamps
+
 extensions = ("cogs.mon", "cogs.convert", "cogs.general", "cogs.ffxiv")
-prefix = ("peachy ", "Peachy ", "peachypy ", "Peachypy ", "PeachyPy ", "px ", "PX ", "Px")
+prefix = ("peachy ", "Peachy ", "peachypy ", "Peachypy ", "PeachyPy ", "px ", "PX ", "Px ", "!")
 
 
 class PeachyPy(commands.Bot):

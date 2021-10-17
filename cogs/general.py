@@ -21,13 +21,14 @@ class General(commands.Cog):
         now = datetime.now()
         emoji = special_em.get(now.strftime("%B"), "🍑")
         await ctx.send(f"Hi there, I'm PeachyPy! 🥰 I look forward to serving you, {ctx.author.name}!\n"
-                       f"You can call me at any time with the following prefixes: Peachy, PX\n"
+                       f"You can call me at any time with the following prefixes: Peachy, PX, !\n"
                        f"I have a few tasks available. Call me with the \"help\" command for more information. {emoji}")
 
     @commands.command()
     @commands.is_owner()
     async def shutdown(self, ctx):
         ctx.send("Good night!")
+        await self.session.close()
         await ctx.bot.logout()
         self.logger.info("Logged out.")
         exit()

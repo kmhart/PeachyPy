@@ -8,7 +8,8 @@ import uuid
 from xlsxwriter.workbook import Workbook
 from peachykey import MON_CHANNEL
 
-# to do: create demon class
+# to do: compendium-- fix excel sheet, add discord message paginator? mkdir if not exists
+# maybe use an ORM
 
 
 class Mon(commands.Cog):
@@ -383,7 +384,7 @@ class Mon(commands.Cog):
                         text_demon = "Critical! "
 
                     # results
-                    text = text_user + f"{persona[1]} attacks for {user_attack}!\n" + \
+                    text = text_user + f"{ctx.author.name}'s {persona[1]} attacks for {user_attack}!\n" + \
                         text_demon + f"{self.current_dmn[1]} attacks for {demon_attack}!\n"
 
                     # check for winners
@@ -529,7 +530,7 @@ class Mon(commands.Cog):
                             await ctx.send("Cancelling fusion. . .")
 
     # noinspection PyCallingNonCallable
-    @tasks.loop(hours=6.0)
+    @tasks.loop(hours=3.0)
     async def pull_demon(self):
         # loop to generate new demon for play
         self.caught = False
